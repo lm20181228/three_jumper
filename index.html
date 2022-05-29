@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>three.js 跳一跳</title>
+</head>
+<body>
+  <!-- 得分栏 -->
+  <div class="mask">
+    <!-- 游戏结束时遮罩弹窗内容 -->
+    <div class="score-content">
+      <p>
+        <span class="title">您本次得分为：</span>
+        <span class="score">0</span>
+      </p>
+      <!-- 开始按钮 -->
+      <button onclick="restartGame()">重新游戏</button>
+    </div>
+    <!-- 游戏中的得分展示 -->
+    <div class="gameing-content">
+      <span class="title">分数：</span>
+      <span class="score">0</span>
+    </div>
+
+  </div>
+  <!-- 绘画区 -->
+  <div>
+
+  </div>
+</body>
+<style>
+  .score-content{
+    display: none;
+    /* display: flex; */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    background-color: #2524296e;
+    width: 100%;
+    height: 100%;
+  }
+  .score-content>p{
+    color: #fff;
+  }
+</style>
+<script src="http://www.yanhuangxueyuan.com/versions/threejsR92/build/three.js"></script>
+<script src="js/init.js"></script>
+<script src="js/creatCube.js"></script>
+<script src="js/updateCameraProps.js"></script>
+<script src="js/jumper.js"></script>
+<script src="js/mouseHanlde.js"></script>
+<script src="js/startGame.js"></script>
+<script>
+   var scene = new THREE.Scene();
+  // 创建透视相机（视觉范围，宽高比例，近距离，远距离）
+  let camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,1,200);
+  let renderer = new THREE.WebGLRenderer({
+    antialias:true
+  })
+  // 渲染画布的宽高
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  // 设置渲染画布的颜色
+  renderer.setClearColor(0x282828);
+  // 开始渲染
+  function render(){
+    renderer.render(scene,camera);
+  }
+  let jumpTojump = {
+    // jumperConfig:{
+        // 获取跳块对象
+        jumper:null,
+        // 属性值
+        config:{
+          jumperWidth:1,
+          jumperHeight:1,
+          jumperDeep:1,
+          jumperColor:"red",
+        },
+        position:{},
+        scale:{},
+        // 画布对象
+        scene:scene,
+        camera:camera,
+        renderer:renderer,
+        // 跳块的初始值
+        jumperStart:{
+          ready:false,
+          xSpeed:0,
+          ySpeed:0,
+        },
+        cameraConfig:{
+          position:{
+          x:0,
+          y:4,
+          z:10,
+          }
+        },
+        falledStart:{
+          location:0,
+        },
+        score:0,//当前获取的分数
+        successCallBack:function(){
+          // 成功回调
+        },
+        cubes :[],
+        cubeConfig :{
+          cubeWidth:4,
+          cubeHeight:2,
+          cubeDeep:4,
+          cubeColor:0xbebebe,
+        },
+        cubeStart:{},
+        // 检测落地点
+        falledStart:{
+          location:-1,
+          distance:0,
+        },
+        fallingStart:{
+          end:false,
+          speed:0.2
+        },
+      // },
+    init,
+    createCube,
+    createJumper,
+    render,
+    updateCamera,
+    startGame,
+    // restartGame
+  }
+  jumpTojump.init();
+  jumpTojump.startGame();
+  function restartGame(){
+    console.log("asfkljasf")
+    scene.traverse((child) => {
+      if (child.material) {
+        child.material.dispose();
+      }
+      if (child.geometry) {
+        child.geometry.dispose();
+      }
+      child = null;
+    });
+    renderer.dispose();
+    scene.clear();
+    // restartGame();
+    // jumpTojump.init();
+    jumpTojump.jumper = null;
+    jumpTojump.cubes = [];
+    jumpTojump.cubeStart = {};
+    jumpTojump.startGame();
+  }
+  // // 场景创建
+  // var scene = new THREE.Scene();
+  // // 创建透视相机（视觉范围，宽高比例，近距离，远距离）
+  // let cameraConfig = {
+  //   position:{
+  //     x:0,
+  //     y:4,
+  //     z:10,
+  //   }
+  // }
+  // let camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,1,200);
+  // camera.position.set(cameraConfig.position.x,cameraConfig.position.y,cameraConfig.position.z);
+  // camera.lookAt(camera.position); //设置相机方向(指向的场景对象)
+  // 设置几何体对象（宽，高，深度）
+  // SphereGeometry 几何球体
+  // BoxGeometry 长方体
+  // CylinderGeometry 正八面体
+  // O 正八面体
+  // let geometry = new THREE.BoxGeometry(4,2,4);
+  // // 添加材质
+  // let material = new THREE.MeshLambertMaterial({color:0xbebebe});
+  // let cube = new THREE.Mesh(geometry,material);
+  // cube.position.x = 16;
+  // // 添加到场景中
+  // scene.add(cube);
+  // 设置几何块的属性设置
+
+  // 添加跳块
+  // 跳块的属性
+  // let jumperConfig = {
+  //   // 获取跳块对象
+  //   jumper:null,
+  //   // 属性值
+  //   config:{
+  //     jumperWidth:1,
+  //     jumperHeight:1,
+  //     jumperDeep:1,
+  //     jumperColor:"red",
+  //   },
+  //   position:{},
+  //   scale:{},
+  //   // 画布对象
+  //   scene:scene,
+  //   // 跳块的初始值
+  //   jumperStart:{
+  //     ready:false,
+  //     xSpeed:0,
+  //     ySpeed:0,
+      
+  //   },
+  //   falledStart:{
+  //     location:0,
+  //   },
+  //   score:0,//当前获取的分数
+  //   successCallBack:function(){
+  //     // 成功回调
+  //   },
+  //   _falling:function(){
+  //     // 失败回调
+  //   },
+  //   _render :render,
+  //   _createCube:_createCube, 
+  //   _updateCamera:_updateCameraProps,
+  //   cameraConfig:cameraConfig,
+  //   camera:camera,
+  //   // ...cubeConfig,
+  //   cubes :[],
+  //   cubeConfig :{
+  //     cubeWidth:4,
+  //     cubeHeight:2,
+  //     cubeDeep:4,
+  //     cubeColor:0xbebebe,
+  //   },
+  //   cubeStart:{},
+  //   // 检测落地点
+  //   falledStart:{
+  //     location:-1,
+  //     distance:0,
+  //   },
+  //   fallingStart:{
+  //     end:false,
+  //     speed:0.2
+  //   },
+  // };
+  // _createCube.call(jumperConfig);
+  // _createCube.call(jumperConfig);
+  // // _createCube.call(jumperConfig);
+  // _createJumper.call(jumperConfig);
+  
+
+  
+  // // 设置光源  平行光 （颜色，强度）
+  // let directionalLight = new THREE.DirectionalLight(0xffffff,1.1)
+  // // 平行光位置
+  // directionalLight.position.set(3,10,5);
+  // // 在场景中加入平行光
+  // scene.add(directionalLight);
+  // // 添加光线的材质
+  // let light = new THREE.AmbientLight(0xffffff,0.4);
+  // // 在场景中添加光
+  // scene.add(light);
+
+  // 渲染
+  // 创建一个渲染器（让边缘动画无锯齿感觉）
+  // let renderer = new THREE.WebGLRenderer({
+  //   antialias:true
+  // })
+  // // 渲染画布的宽高
+  // renderer.setSize(window.innerWidth,window.innerHeight);
+  // // 设置渲染画布的颜色
+  // renderer.setClearColor(0x282828);
+  // // 渲染进场相机（后续更新也是这儿）
+  // renderer.render(scene,camera);
+  // // 把当前渲染的画布放置到body中
+  // document.body.appendChild(renderer.domElement);
+
+  // // 开始渲染
+  // // let x = 8;
+  // function render(){
+  //   renderer.render(scene,camera);
+  // }
+
+  // 开始游戏
+  // startGame.call(jumperConfig);
+
+  // // 监听分数变动
+  // Object.defineProperty(jumperConfig,"score",{
+  //   set(value){
+  //     console.log("value",value)
+  //     jumperConfig._score = value;
+  //     let soreDom = document.getElementsByClassName("score");
+  //     soreDom[0].innerHTML = jumperConfig._score;
+  //     soreDom[1].innerHTML = jumperConfig._score;
+  //   },
+  //   get(){
+  //     return jumperConfig._score || 0;
+  //   }
+  // })
+  
+</script>
+</html>
